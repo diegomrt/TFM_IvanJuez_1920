@@ -7,13 +7,14 @@ import rospy
 import copy, math
 from math import pi 
 import moveit_commander
+import actionlib
 from moveit_commander import RobotCommander, MoveGroupCommander
 from moveit_commander import PlanningSceneInterface, roscpp_initialize, roscpp_shutdown
 import geometry_msgs.msg
 from geometry_msgs.msg import PoseStamped
 import moveit_msgs.msg
 from moveit_msgs.msg import PlanningScene, ObjectColor
-from moveit_msgs.msg import Grasp, GripperTranslation, PlaceLocation, MoveItErrorCodes
+from moveit_msgs.msg import Grasp, GripperTranslation, PlaceLocation, MoveItErrorCodes, PickupAction, PickupGoal, PickupResult
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
 import random
@@ -75,94 +76,51 @@ def move_joint_gripper(joint):
     gripper.go(joint_goal, wait=True)
     gripper.stop() # Garantiza que no hay movimiento residual
 
+def createGrasp(grasp_pose):
+    grasp = Grasp()
+    grasp.id = "prueba"   
+    grasp.grasp_pose = grasp_pose
     
-# Defino la postura de la pinza como JointTrajectory
-def make_gripper_posture(joint_positions):
-	#inicilizo el joint trayectory para los joint de la pinza
-        t = JointTrajectory()
-	#Defino los nombres de los joint de la pinza, en mi caso no se si solo se pone el 1 o los 2
-        t.joint_names = GRIPPER_JOINT_NAMES
-	#Asigno la una trayectoria de punto que represente el objetivo
-        tp = JointTrajectoryPoint()
-	#Asigno la trayectoria a los joints
-        tp.positions = joint_positions
-	#FIjo el gripper effort
-        tp.effort = GRIPPER_EFFORT
-	tp.time_from_start = rospy.Duration(1.0)
-	#adjunto los puntos a la trayectoria de puntos
-        t.points.append(tp)
-        return t
+    grasp.pre_grasp_posture.header.frame_id = "base_link" 
+    grasp.pre_grasp_posture.header.stamp = rospy.Time.now() 
+    grasp.pre_grasp_posture.joint_names = ["gripper_finger1_joint", "gripper_finger2_joint"]
+    pos = JointTrajectoryPoint() 
+    pos.positions.append(0.0)
+    pos.positions.append(0.0)
+    
+    grasp.pre_grasp_posture.points.append(pos)
+     
+     
+    grasp.grasp_posture.header.frame_id = "base_link"
+    grasp.grasp_posture.header.stamp = rospy.Time.now() 
+    grasp.grasp_posture.joint_names = ["gripper_finger1_joint", "gripper_finger2_joint"]
+    pos = JointTrajectoryPoint() 
+    pos.positions.append(1.0)
+    pos.positions.append(1.0)
+    
+    grasp.grasp_posture.points.append(pos)
+    
+    grasp.max_contact_force = 0
+    
+    return grasp
+    
 
-    #Ahora creo la translacion de la distancia del objeto a coger , sería como la pre_grap_approach y el post_grasp_retreat, nos devuelve la dirección del vector y la distancia deseada y la distancia mínima al objeto
-def make_gripper_translation(min_dist, desired, vector):
-	#Inicio el objeto grippert translation
-        g = GripperTranslation()
-	 # Defino las componentes del vector
-	g.direction.vector.x = vector[0]
-	g.direction.vector.y = vector[1]
-	g.direction.vector.z = vector[2]
-	#EL vector es relativo al gripper_frame
-        g.direction.header.frame_id = GRIPPER_FRAME
-	#Defino la distancia minima y deseada al objetivo
-        g.min_distance = min_dist
-        g.desired_distance = desired
-        return g
+def createPickupGoal(group="irb_120", target='box1', grasp_pose=PoseStamped()):
+    pug = PickupGoal() 
+    pug.target_name = target
+    pug.group_name = group
+    
+    # Create grasp to append
+    grsp = createGrasp(grasp_pose)
+    #pug.possible_grasps.append(grsp)
+    pug.allowed_planning_time = 5.0 
+    pug.planning_options.planning_scene_diff.is_diff = True
+    pug.planning_options.planning_scene_diff.robot_state.is_diff = True
+    pug.planning_options.plan_only = False
+    pug.allowed_touch_objects.append("box1")
+    
+    return pug
 
-    # Genero una lista de posibles grasps
-def make_grasps(initial_pose_stamped, allowed_touch_objects, grasp_opening=[0]):
-	# INicio el grasp
-	g = Grasp()
-
-	# Asigno las posiciones de pre-grasp y grasp postures;
-	
-	g.pre_grasp_posture = make_gripper_posture(GRIPPER_OPEN)
-	g.grasp_posture = make_gripper_posture(grasp_opening)
-
-	# Defino los parametros de aproximación y alejar deseados
-	g.pre_grasp_approach = make_gripper_translation(0.01, 0.1, [1.0, 0.0, 0.0])
-	g.post_grasp_retreat = make_gripper_translation(0.1, 0.15, [0.0, -1.0, 1.0])
-
-	# Defino la primera grasp pose
-	g.grasp_pose = initial_pose_stamped
-
-	# Pitch angulos a probar: POR AHORA SOLO UNO
-	pitch_vals = [0]
-
-	# Yaw angles to try: POR AHORA SOLO UNO
-	yaw_vals = [0]
-	
-	# A list to hold the grasps
-	grasps = []
-
-	# Genero un grasp para cada angulo pitch y yaw
-	for y in yaw_vals:
-	    for p in pitch_vals:
-		# Creo un quaternion de Euler angles, con un roll de pi (cenital)
-		q = quaternion_from_euler(pi, p, y)
-
-		# asigno grasppose acorde al quaternio
-		g.grasp_pose.pose.orientation.x = q[0]
-		g.grasp_pose.pose.orientation.y = q[1]
-		g.grasp_pose.pose.orientation.z = q[2]
-		g.grasp_pose.pose.orientation.w = q[3]
-
-		# EStablezco la id de este grasp 
-		g.id = str(len(grasps))
-
-		# Defino los objetos que se pueden tocar
-		g.allowed_touch_objects = allowed_touch_objects
-	
-		# no elimino la fuerza de contacto
-		g.max_contact_force = 0
- 
-	
-		g.grasp_quality = 1.0 - abs(p)
-
-		# Adjunto la lista de grasp
-		grasps.append(deepcopy(g))
-	
-	#Me devuelve la lista
-	return grasps
 
  
 if __name__=='__main__':
@@ -173,6 +131,12 @@ if __name__=='__main__':
 	#INicio el nodo obejtivo1y2 de rospy
         moveit_commander.roscpp_initialize(sys.argv)
         rospy.init_node('objetivo1y2')
+
+	rospy.loginfo("Connecting to pickup AS")
+    	pickup_ac = actionlib.SimpleActionClient('/pickup', PickupAction)
+    	pickup_ac.wait_for_server()
+    	rospy.loginfo("Succesfully connected.")
+
       	#Lanzo la escena y el robot
         scene = moveit_commander.PlanningSceneInterface()
         robot = moveit_commander.RobotCommander()
@@ -218,9 +182,7 @@ if __name__=='__main__':
 
 	# MUEVO ROBOT A HOME. ABRO PINZA
         rospy.loginfo("Moving arm to HOME")
-	arm.set_named_target('arm_posicion_inicio')
-        arm.go()
-	#move_pose_arm(0,0.4,0,0.4,0,0.6)
+	move_pose_arm(0,0.4,0,0.4,0,0.6)
 	#move_pose_arm(0,0,0,0,0,0)
         rospy.sleep(2)
         rospy.loginfo("Opening gripper")
@@ -241,8 +203,8 @@ if __name__=='__main__':
    
         # Añadimos la caja que será cogida (alejada por el momento)
         box1_pose.pose.position.x = 0.3
-        box1_pose.pose.position.y = 0.3
-        box1_pose.pose.position.z = 0.5
+        box1_pose.pose.position.y = -0.3
+        box1_pose.pose.position.z = 0.3
         scene.add_box(box1_id, box1_pose, box1_size)
         rospy.sleep(1)
         
@@ -250,57 +212,25 @@ if __name__=='__main__':
 	raw_input("\n BLOQUE 2 terminado. Press key to continue")
 
 	##################################################################################################
-	# BLOQUE 3: Grasping con pick()
+	# BLOQUE 3: Grasping con pickup()
 	##################################################################################################
 
-	#Inicializo el grasp definiendo el grasp pose con la ubicación de mi caja
-	grasp_pose = box1_pose
+    	
 
-	# FIjo la grasp pose un poco más arriba por ahora, para evitar colision pinza caja
-	grasp_pose.pose.position.z = grasp_pose.pose.position.z 
 
-	# Genero una lista de grasps
-	grasps = make_grasps(grasp_pose, [box1_id], [box1_size[1] - GRASP_OVERTIGHTEN])
+	pose_grasp = copy.deepcopy(box1_pose)
+    	pose_grasp.pose.position.x -= 0.20
+    	pose_grasp.pose.position.y -= 0.05
+	#goal = createPickupGoal("robotiq_85", 'box1' , pose_grasp)
+	#result= arm.pick(box1_id, grsps)
 
-	# Publico las grasp poses para verlas en RVIZ
-	for grasp in grasps:
-	    gripper_pose_pub.publish(grasp.grasp_pose)
-	    print "\n ------------------------------------------------------------------\n"
-	    print "\n grasp =\n",grasp #debug 
-	    rospy.sleep(0.2)
-	# Pruebo exito/fallo y el numero de intentos para la operación de pick
-	result = False
-	
-	n_attempts = 0
-       
-        # repeat until will succeed
-        while result == False:
-            result = arm.pick(box1_id, grasps)      
-            n_attempts += 1
-            print "Attempts: ", n_attempts
-            rospy.sleep(0.3)
-	result = arm.pick(box1_id, grasps)	
-	result = MoveItErrorCodes.FAILURE
-	
-	
-	n_attempts = 0
+    	goal = createPickupGoal("irb_120", 'box1' , pose_grasp)
+    	rospy.loginfo("Sending goal")
+    	pickup_ac.send_goal(goal)
+    	rospy.loginfo("Waiting for result")
+    	pickup_ac.wait_for_result()
+    	result = pickup_ac.get_result()
 
-	# PICK: Repito hasta que tenemos un buen resultado 
-	while result != MoveItErrorCodes.SUCCESS and n_attempts < max_pick_attempts:
-	    result = arm.pick(box1_id, grasps)
-	    n_attempts += 1
-	    rospy.loginfo("Pick intentos: " + str(n_attempts))
-	    rospy.sleep(0.2)
-
-	# Si el pick es exitoso, intento la locacilación del pick
-	if result == MoveItErrorCodes.SUCCESS:
-	    
-	    success = False
-	    n_attempts = 0
-	    
-	else:
-	    rospy.loginfo("Pick operation failed after " + str(n_attempts) + " attempts.")
-	
 
 	
 	raw_input("\n Pick realizado. Press key to continue")
@@ -310,7 +240,10 @@ if __name__=='__main__':
 	# MUEVO ROBOT CON OBJETO COGIDO
         rospy.loginfo("Moving arm while box is picked")	
 	move_pose_arm(0,0.2,0,0.5,-0.25,0.3)
+	
+	#No se me mueve la pinza
 	gripper.set_named_target("cerrada")
+	move_joint_gripper(1)
 	gripper.go()
         rospy.sleep(4)
 
