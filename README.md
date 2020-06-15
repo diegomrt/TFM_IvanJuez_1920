@@ -26,9 +26,5 @@ Para lanzarlo en Rviz y Gazebo utilizo el siguiente comando:
 
 Para realizar el pick:
 
-·rosrun pick_place pick_place.py
-
-La otra alternativa para realizar el pick es lanzando:
-
-·rosrun pick_place pick_place_prueba.py
+·rosrun pick_place pick_boxintable_irb120_moveit.py
 
