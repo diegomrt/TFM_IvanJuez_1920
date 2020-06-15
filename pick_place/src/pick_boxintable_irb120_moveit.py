@@ -291,16 +291,16 @@ if __name__=='__main__':
 	# Fijo posicion y orientacion de la mesa. Se añade a la escena	
 	table_pose = PoseStamped()
         table_pose.header.frame_id = robot.get_planning_frame()
-        table_pose.pose.position.x = 0.5
+        table_pose.pose.position.x = 0.4
         table_pose.pose.position.y = 0.0
-        table_pose.pose.position.z = 0.4
+        table_pose.pose.position.z = 0.1
         table_pose.pose.orientation.w = 1.0
         scene.add_box(table_id, table_pose, table_size)
 
        	# Fijo posicion y orientacion de la caja 1 (z sobre la mesas siempre)
         box1_pose = PoseStamped()
         box1_pose.header.frame_id = robot.get_planning_frame()
-        box1_pose.pose.position.x = 0.5
+        box1_pose.pose.position.x = 0.45
         box1_pose.pose.position.y = 0.3
         box1_pose.pose.position.z = table_pose.pose.position.z + table_size[2]/2 + box1_size[2]/2
         scene.add_box(box1_id, box1_pose, box1_size)
@@ -308,7 +308,7 @@ if __name__=='__main__':
 	# Fijo posicion y orientacion de la caja 2 (obstáculo). Se añade a la escena
         box2_pose = PoseStamped()
         box2_pose.header.frame_id = robot.get_planning_frame()
-        box2_pose.pose.position.x = 0.5
+        box2_pose.pose.position.x = 0.4
         box2_pose.pose.position.y = 0
         box2_pose.pose.position.z = table_pose.pose.position.z + table_size[2]/2 + box2_size[2]/2
         scene.add_box(box2_id, box2_pose, box2_size)

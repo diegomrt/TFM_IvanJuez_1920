@@ -9,7 +9,7 @@
 	
 	<!-- Robotiq 85 -->
 	<xacro:include filename="$(find robotiq_85_description)/urdf/robotiq_85_gripper.urdf.xacro" />
-	<xacro:robotiq_85_gripper prefix="" parent="tool0">
+	<xacro:robotiq_85_gripper prefix="" parent="flange">
 		<origin xyz="0 0 0" rpy="0 0 0" />
 	</xacro:robotiq_85_gripper>
 	

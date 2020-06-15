@@ -16,7 +16,7 @@
         <joint name="joint_4" />
         <joint name="joint_5" />
         <joint name="joint_6" />
-	<link name="tool0" />
+	<link name="flange" />
         <!--joint name="joint6-tool0"-->
     </group>
     <group name="robotiq_85">
@@ -59,7 +59,7 @@
     </group_state>
 
     <!--END EFFECTOR: Purpose: Represent information about an end effector.-->
-    <end_effector name="robotiq_85" parent_link="tool0" group="robotiq_85" parent_group="irb_120"/>
+    <end_effector name="robotiq_85" parent_link="flange" group="robotiq_85" parent_group="irb_120"/>
     <!--inicialmente ponia esto end_effector name="robotiq_85" parent_link="gripper_base_link" group="robotiq_85" parent_group="irb_120"/-->
 
     <!--DISABLE COLLISIONS: By default it is assumed that any link of the robot could potentially come into collision with any other link in the robot. This tag disables collision checking between a specified pair of links. -->
