@@ -5,7 +5,7 @@
 	<xacro:arg name="limited" default="true"/>
 
 	<!-- ABB IRB120 from ROS-i repos -->
-	<xacro:include filename="$(find abb_irb120_gazebo)/urdf/irb120_3_58_final.xacro" />
+	<xacro:include filename="$(find abb_irb120_gazebo)/urdf/irb120_3_58_v1.xacro" />
 	
 	<!-- Robotiq 85 -->
 	<xacro:include filename="$(find robotiq_85_description)/urdf/robotiq_85_gripper.urdf.xacro" />

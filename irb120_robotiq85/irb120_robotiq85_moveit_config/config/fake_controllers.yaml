@@ -10,3 +10,4 @@ controller_list:
   - name: fake_robotiq_85_controller
     joints:
       - gripper_finger1_joint
+      

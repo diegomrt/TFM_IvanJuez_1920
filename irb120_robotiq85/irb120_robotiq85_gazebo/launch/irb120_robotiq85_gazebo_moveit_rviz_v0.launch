@@ -14,15 +14,14 @@
 
   <!-- startup simulated world -->
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
-    <arg name="world_name" value="worlds/empty.world"/>
-    <arg name="gui" value="true"/>
+    <arg name="world_name" value="$(find irb120_robotiq85_gazebo)/worlds/v0.world"/>
     <arg name="paused" value="$(arg paused)"/>
     <arg name="use_sim_time" value="$(arg use_sim_time)"/>
     <arg name="headless" value="$(arg headless)"/>
   </include>
 
   <!-- send robot urdf to param server -->
-  <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find irb120_robotiq85_gazebo)/urdf/irb120_robotiq85_ivan_macro.xacro'"/>
+  <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find irb120_robotiq85_gazebo)/urdf/irb120_robotiq85_macro_v0.xacro'"/>
 
   <!-- push robot_description to factory and spawn robot in gazebo -->
   <node name="spawn_gazebo_model" pkg="gazebo_ros" type="spawn_model" args="-urdf -param robot_description -model irb120_robotiq85" respawn="false" output="screen" />
@@ -49,6 +48,11 @@
   <!-- load the GRIPPER controller (command interface) -->
   <rosparam file="$(find irb120_robotiq85_gazebo)/config/robotiq_gripper_controller.yaml" command="load"/> 
   <node name="robotiq_gripper_controller_spawner" pkg="controller_manager" type="spawner" args="gripper_controller" />
+
+
+  <!-- launch rviz to check TF data -->
+  <node type="rviz" name="rviz" pkg="rviz" args="-d $(find irb120_robotiq85_gazebo)/rviz/irb120.rviz" />
+
 
   <!-- MOVEIT: LAUNCH MOVEIT_COMMANDER and RVIZ from CONFIG PACKAGE -->
 

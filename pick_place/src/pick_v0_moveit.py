@@ -4,13 +4,13 @@
 """
     Version 1 - 09-06-2020
     
-    Command the Panda arm and gripper to grasp a target object (box) and move it to a new
+    Command the irb120 arm and gripper to grasp a target object (box) and move it to a new
     location, using the pick() method and the GRASP message in MoveIt commander
 
     Included a second object (as obstacle) and a table
 
     Usage:
-	1. Launch Panda robot including MoveIt
+	1. Launch ABB IRB120 robot including MoveIt
 	2. python "this_file.py"
     
     Some parts are taken from the "pick_and_place.py" Moveit demo of the Turtlebot arm:
@@ -37,24 +37,25 @@ from copy import deepcopy
 debug = True
 
 # Constantes: Nombres de grupos y frames
-GROUP_NAME_ARM = 'panda_arm'
-GROUP_NAME_GRIPPER = 'hand'
-GRIPPER_FRAME = 'panda_hand' 
+GROUP_NAME_ARM = 'irb_120'
+GROUP_NAME_GRIPPER = 'robotiq_85'
+GRIPPER_FRAME = 'flange' 
 FIXED_FRAME = 'world'
 
 # Posiciones predefinidas para brazo. EL place se hace con IK, no con place() 
-ARM_HOME_O = [pi, 0, -pi/4]		# HOME [roll, pitch, yaw] in FIXED_FRAME
-ARM_HOME_P = [0.2, 0, 0.7]		# HOME [x,y,z] in FIXED_FRAME
+ARM_HOME_O = [0, pi/2, 0]		# HOME [roll, pitch, yaw] in FIXED_FRAME
+ARM_HOME_P = [0.1, 0.2, 0.6]		# HOME [x,y,z] in FIXED_FRAME
 
 ARM_PLACE_O = [0, 0, 0] 		# PLACE [roll, pitch, yaw] in FIXED_FRAME
 ARM_PLACE_P = [0.4, -0.3, 0.6]		# PLACE [x,y,z] in FIXED_FRAME
 
 # Posiciones predefinidas para pinza y otros parametros relacionados 
-GRIPPER_OPEN = [0.04, 0.04]
-GRIPPER_JOINT_NAMES = ['panda_finger_joint1','panda_finger_joint2']
-GRASP_OVERTIGHTEN = 0.002 	# Regula cuánto me paso apretando al coger (típico 2 mm) 
+GRIPPER_OPEN = [0.0]
+GRIPPER_cerrada = [0.6]
+GRIPPER_JOINT_NAMES = ['gripper_finger1_joint']
+GRASP_OVERTIGHTEN = 0.001	# Regula cuánto me paso apretando al coger (típico 2 mm) 
 GRIPPER_EFFORT = [1.0]
-GRIPPER_EXTRA = 0.11		# Distancia de la muñeca del robot al TCP  
+GRIPPER_EXTRA = 0.15		# Distancia de la muñeca del robot al TCP  
 
 # Parámetros para el mensaje de GRASP
 VECTOR_PREGRASP = [0.0, 0.0, -1]	# Aprox PRE_GRASP en eje -z (de arriba hacia abajo)
@@ -92,7 +93,7 @@ def move_pose_arm(roll,pitch,yaw,x,y,z):
 def move_joint_gripper(joint):
     joint_goal = gripper.get_current_joint_values()
     joint_goal[0] = joint
-    joint_goal[1] = joint
+    #joint_goal[1] = joint
 
     gripper.go(joint_goal, wait=True)
     gripper.stop() # Garantiza que no hay movimiento residual
@@ -152,6 +153,7 @@ def make_grasps(initial_pose_stamped, allowed_touch_objects, grasp_opening=[0]):
 
 	# Abrimos pinza totalmente al inicio. Cerramos hasta valor dado al coger
 	g.pre_grasp_posture = make_gripper_posture(GRIPPER_OPEN)
+	#g.grasp_posture = make_gripper_posture(grasp_opening)
 	g.grasp_posture = make_gripper_posture(grasp_opening)
 
 	# Recordemos: vector de aproximacion, distancia deseada, distancia mínima
@@ -159,11 +161,11 @@ def make_grasps(initial_pose_stamped, allowed_touch_objects, grasp_opening=[0]):
 	g.post_grasp_retreat = make_gripper_translation(VECTOR_POSTGRASP, APP_DISTANCE, APP_MIN_DIST)
 
 	# ANGULO de roll FIJO 
-	roll_fixed = pi
+	roll_fixed = 0
 	
 	# ANGULOS VARIABLES: SI SE INDICAN VARIOS CREA UN MENSAJE DE GRASP POR CADA UNO
-	pitch_vals = [0]
-	yaw_vals = [-pi/4]
+	pitch_vals = [pi/2]
+	yaw_vals = [0]
 
 	# Generacion de un mensaje de grasp para cada angulo pitch y yaw
 	grasps = []	
@@ -249,7 +251,17 @@ if __name__=='__main__':
 	arm.set_planning_time(10)		# 10 s para no tener TIME_OUTs en arm
 	gripper.set_planning_time(5)		# 5 s para no tener TIME_OUTs en gripper
 	max_pick_attempts = 1
+	tol_gripper_o= gripper.get_goal_orientation_tolerance()
+	tol_gripper_p= gripper.get_goal_position_tolerance()
+	tol_arm_o= arm.get_goal_orientation_tolerance()
+	tol_arm_p= arm.get_goal_position_tolerance()
 
+	tol_gripper_o_n= gripper.set_goal_orientation_tolerance(0.01)
+	tol_gripper_p_n= gripper.set_goal_position_tolerance(0.001)
+	tol_arm_o_n= arm.set_goal_orientation_tolerance(0.01)
+	tol_arm_p_n= arm.set_goal_position_tolerance(0.001)
+	
+	
 	# Si queremos saber qué hay en la escena
 	# objects_in_scene = scene.get_objects()
 	
@@ -271,7 +283,10 @@ if __name__=='__main__':
 
 	if debug == True:
 		# Detección del link que vamos a mover
-	        eef = arm.get_end_effector_link()		
+	        eef = arm.get_end_effector_link()
+		print "tolerancias iniciales del brazo y pinza= ", tol_arm_o, tol_arm_p, tol_gripper_o , tol_gripper_p
+		print "tolerancias impuestas del brazo y pinza= ", tol_arm_o_n, tol_arm_p_n, tol_gripper_o_n , tol_gripper_p_n
+	
 		print "\n El End effector detectado es= ", eef
         	# Estado del robot
         	print "\n ============ Printing robot state ============"
@@ -291,16 +306,16 @@ if __name__=='__main__':
 	# Fijo posicion y orientacion de la mesa. Se añade a la escena	
 	table_pose = PoseStamped()
         table_pose.header.frame_id = robot.get_planning_frame()
-        table_pose.pose.position.x = 0.5
+        table_pose.pose.position.x = 0.3
         table_pose.pose.position.y = 0.0
-        table_pose.pose.position.z = 0.4
+        table_pose.pose.position.z = 0.1
         table_pose.pose.orientation.w = 1.0
         scene.add_box(table_id, table_pose, table_size)
 
        	# Fijo posicion y orientacion de la caja 1 (z sobre la mesas siempre)
         box1_pose = PoseStamped()
         box1_pose.header.frame_id = robot.get_planning_frame()
-        box1_pose.pose.position.x = 0.5
+        box1_pose.pose.position.x = 0.3
         box1_pose.pose.position.y = 0.3
         box1_pose.pose.position.z = table_pose.pose.position.z + table_size[2]/2 + box1_size[2]/2
         scene.add_box(box1_id, box1_pose, box1_size)
@@ -308,7 +323,7 @@ if __name__=='__main__':
 	# Fijo posicion y orientacion de la caja 2 (obstáculo). Se añade a la escena
         box2_pose = PoseStamped()
         box2_pose.header.frame_id = robot.get_planning_frame()
-        box2_pose.pose.position.x = 0.5
+        box2_pose.pose.position.x = 0.3
         box2_pose.pose.position.y = 0
         box2_pose.pose.position.z = table_pose.pose.position.z + table_size[2]/2 + box2_size[2]/2
         scene.add_box(box2_id, box2_pose, box2_size)
@@ -337,7 +352,8 @@ if __name__=='__main__':
 	grasp_pose.pose.position.z = grasp_pose.pose.position.z + GRIPPER_EXTRA
 
 	# Llamada generación mensajes de graps 
-	grasps = make_grasps(grasp_pose, [box1_id], [box1_size[1]/2 - GRASP_OVERTIGHTEN, box1_size[1]/2 - GRASP_OVERTIGHTEN])
+	#grasps = make_grasps(grasp_pose, [box1_id], [box1_size[1]/2 - GRASP_OVERTIGHTEN, box1_size[1]/2 - GRASP_OVERTIGHTEN])
+	grasps = make_grasps(grasp_pose, [box1_id], [0.5 - box1_size[1]/2 - GRASP_OVERTIGHTEN] )
 
 	# Publico las grasp poses para verlas en RVIZ
 	for grasp in grasps:
@@ -367,10 +383,11 @@ if __name__=='__main__':
 	##################################################################
 	# BLOQUE 4: Place. Por ahora sólo movimiento del brazo sin MoveIt
 	##################################################################
-	
+	raw_input("\n BLOQUE 3 terminado. Press key to continue")
 	# MUEVO ROBOT a punto de place CON OBJETO COGIDO (por ahora con IK clásica)
 	# Uso la orientación del punto HOME (Place vertical)
 	rospy.loginfo("Moving arm to PLACE point")	
+	#move_pose_arm(ARM_HOME_O[0],ARM_HOME_O[1],ARM_HOME_O[2],box1_pose.pose.position.x, -0.3, box1_pose.pose.position.z)
 	move_pose_arm(ARM_HOME_O[0],ARM_HOME_O[1],ARM_HOME_O[2],box1_pose.pose.position.x, -0.3, box1_pose.pose.position.z)
         rospy.sleep(0.5)
         
