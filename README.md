@@ -12,9 +12,8 @@ Si queremos cargar el brazo usando el grasp plugin de Gazebo, debemos introducir
 ·roslaunch irb120_robotiq85_gazebo irb120_robotiq85_gazebo_moveit_rviz_v1.launch load_grasp_fix:=true
 
 
-Para realizar el pick:
+Para realizar el pick se debe introducir que caja quieres que coga o "verde" o "azul" y directamente obtiene la posición y orientación de las cajas en Gazebo para realizar el pick. Me falta por hacer la lista de objetos para que me diga autimaticamente los objetos que hay pero de momento funciona unicamente indicando la caja que quieres que coja.
 
-·rosrun pick_place pick_v1_moveit_gazebo.py
+·rosrun pick_place pick_v3_moveit_gazebo.py
 
 
-Dentro de la carpeta Media se puede encontrar un video (pick_v1.mkv) donde se puede ver como se realiza el pick and place tanto en Rviz como Gazebo.

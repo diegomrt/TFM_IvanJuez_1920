@@ -51,8 +51,8 @@ ARM_PLACE_O = [0, 0, 0] 		# PLACE [roll, pitch, yaw] in FIXED_FRAME
 ARM_PLACE_P = [0.4, -0.3, 0.6]		# PLACE [x,y,z] in FIXED_FRAME
 
 # Posiciones predefinidas para pinza y otros parametros relacionados 
-GRIPPER_OPEN = [0.0]
-GRIPPER_cerrada = [0.6]
+GRIPPER_OPEN = [0.01]
+GRIPPER_cerrada = [0.55]
 GRIPPER_JOINT_NAMES = ['gripper_finger1_joint']
 GRASP_OVERTIGHTEN = 0.001	# Regula cuánto me paso apretando al coger (típico 2 mm) 
 GRIPPER_EFFORT = [1.0]
@@ -103,19 +103,26 @@ def move_joint_gripper(joint):
 ###################################################	
 ### FUNCIONES para trabajar con Gazebo 
 ###################################################
+
+#clase donde defino los bloques/objetos que se encuentran en gazebo, asignadonles el nombre del modelo y el nombre del link
+
 class Block:
     def __init__(self, name, relative_entity_name):
         self._name = name
         self._relative_entity_name = relative_entity_name
 
+
+
 class posiciones_gazebo:
 
+#creo un diccionario con todos los objetos que aparecen en la escena de Gazebo
     _blockListDict = {
         'block_a': Block('objetivo', 'link'),
         'block_b': Block('obstaculo', 'link'),
 
     }
 
+#Con esta función, nos muestra la posicion (x, y y z) y quaternios de los objetos de la escena  
     def show_gazebo_models(self):
         try:
             model_coordinates = rospy.ServiceProxy('/gazebo/get_model_state', GetModelState)
@@ -138,6 +145,8 @@ class posiciones_gazebo:
 
         except rospy.ServiceException as e:
             rospy.loginfo("Get Model State service call failed:  {0}".format(e))
+	return posicion
+
 
 ###################################################	
 ### FUNCIONES para trabajar con MOVEIT  
@@ -305,18 +314,25 @@ if __name__=='__main__':
 	# Limpiamos la escena (si existe de ejecuciones previas)
 	box1_id='box1'	
 	box2_id='box2'	
-	#table_id = 'table'
+	
         scene.remove_world_object(box1_id)
 	scene.remove_world_object(box2_id)
-	#scene.remove_world_object(table_id)
+	
 	rospy.sleep(1)
 
 	# ROBOT A HOME y ABRO PINZA (esto no usa MoveIt)
         rospy.loginfo("Moving arm to HOME")	
 	move_pose_arm(ARM_HOME_O[0],ARM_HOME_O[1],ARM_HOME_O[2],ARM_HOME_P[0],ARM_HOME_P[1],ARM_HOME_P[2])
         rospy.sleep(2)
+
         rospy.loginfo("Opening gripper")
+
         move_joint_gripper(GRIPPER_OPEN[0])
+
+	# OBtengo los valores correspondientes a todos los joints de la pinza cuando se encuentra abierta para despues mandar que me los ponga en esa posición una vez realizado el pick
+	group_variable_values = gripper.get_current_joint_values()
+
+	print "============ Joint values: ", group_variable_values
 
 	if debug == True:
 		# Detección del link que vamos a mover
@@ -338,10 +354,10 @@ if __name__=='__main__':
 
 	# Definimos prueba como lugar donde se va almacenar las posiciones de los objetos "obstaculo" y "objetivo"
 	prueba= posiciones_gazebo()
-	#prueba.show_gazebo_models()
+	
        	
 	# Dimensiones de las cajas y de la mesa [largo, ancho, altura]
-	box1_size=[0.05, 0.05, 0.05]
+	box1_size=[0.06, 0.06, 0.06]
 	box2_size = [0.2, 0.05, 0.4]
         #table_size = [0.3, 1, 0.02]
 
@@ -397,11 +413,14 @@ if __name__=='__main__':
 	# Posición de la caja como objetivo del grasp. Sumamos extra por tamaño herramienta
 	grasp_pose = box1_pose
 	grasp_pose.pose.position.z = grasp_pose.pose.position.z + GRIPPER_EXTRA
-
-	# Llamada generación mensajes de graps 
-	#grasps = make_grasps(grasp_pose, [box1_id], [box1_size[1]/2 - GRASP_OVERTIGHTEN, box1_size[1]/2 - GRASP_OVERTIGHTEN])
-	grasps = make_grasps(grasp_pose, [box1_id], [ 0.45 - box1_size[1]/2 - GRASP_OVERTIGHTEN] )
 	
+	# Llamada generación mensajes de graps 
+	
+	grasps = make_grasps(grasp_pose, [box1_id], [ GRIPPER_cerrada[0] - box1_size[1]/2 - GRASP_OVERTIGHTEN] )
+	
+
+	
+
 	# Publico las grasp poses para verlas en RVIZ
 	for grasp in grasps:
 	    gripper_pose_pub.publish(grasp.grasp_pose)
@@ -434,15 +453,21 @@ if __name__=='__main__':
 	# MUEVO ROBOT a punto de place CON OBJETO COGIDO (por ahora con IK clásica)
 	# Uso la orientación del punto HOME (Place vertical)
 	rospy.loginfo("Moving arm to PLACE point")	
-	#move_pose_arm(ARM_HOME_O[0],ARM_HOME_O[1],ARM_HOME_O[2],box1_pose.pose.position.x, -0.3, box1_pose.pose.position.z)
+	
 	move_pose_arm(ARM_HOME_O[0],ARM_HOME_O[1],ARM_HOME_O[2],box1_pose.pose.position.x, -0.3, box1_pose.pose.position.z)
         rospy.sleep(0.5)
         
-	# Abro pinza y suelto el objeto con remove_attached_object
-	rospy.loginfo("Opening gripper")
-        make_gripper_posture(GRIPPER_OPEN)
+	# Abro pinza y suelto el objeto con remove_attached_object / esta parte es la que me falla
+	rospy.loginfo("Abriendo pinza")
+
+	#Asigno de nuevo los valores a los joints de la pinza cuando se encontraba abierta mediante el comando set_joint_value_target y mando a que vaya a esos valores
+		      
+	gripper.set_joint_value_target(group_variable_values)
+	plan2 = gripper.plan()
+	gripper.go(wait=True)
 	scene.remove_attached_object(GRIPPER_FRAME, box1_id)
         rospy.sleep(0.5)	
+
 
 	# ROBOT A HOME FINAL. Podría generar colisión al no estar bien hecho con place()
         rospy.loginfo("Moving arm to HOME")	
