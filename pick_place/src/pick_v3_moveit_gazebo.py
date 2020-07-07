@@ -53,7 +53,7 @@ ARM_PLACE_P = [0.4, -0.3, 0.6]		# PLACE [x,y,z] in FIXED_FRAME
 
 # Posiciones predefinidas para pinza y otros parametros relacionados 
 GRIPPER_OPEN = [0.01]
-GRIPPER_cerrada = [0.45]
+GRIPPER_cerrada = [0.44]
 GRIPPER_JOINT_NAMES = ['gripper_finger1_joint']
 GRASP_OVERTIGHTEN = 0.001	# Regula cuánto me paso apretando al coger (típico 2 mm) 
 GRIPPER_EFFORT = [1.0]
@@ -250,6 +250,13 @@ def sendColors():
         # Publish the scene diff
         scene_pub.publish(p)
 
+#Creo la funcion callback para que me mande los datos de los nombres del topic /gazebo/model_states
+
+def callback(msg):
+	print "Los objetos a coger son = ", msg.name
+	print '\n'
+	objetos.unregister()
+
 if __name__=='__main__':
 
 	###########################################################
@@ -322,8 +329,12 @@ if __name__=='__main__':
 	# BLOQUE 2: Creacion escena con una única caja
 	################################################
 	
-	#intento sacar la lista de los nombres de los modelos de gazebo
-	objetos = rospy.Subscriber("/gazebo/model_states", ModelStates)
+	#Creo un subscritor al topic de Gazebo/Model_states con el fin de conseguir los nombres de todos los modelos simulados en gazebo
+
+	global objetos
+	objetos = rospy.Subscriber("/gazebo/model_states", ModelStates, callback)
+
+	rospy.sleep(1)
 
 	model = raw_input("\n Introduzca el color de la pieza a realizar pick : ") 
 	
@@ -446,7 +457,7 @@ if __name__=='__main__':
 	# Uso la orientación del punto HOME (Place vertical)
 	rospy.loginfo("Moving arm to PLACE point")	
 	
-	move_pose_arm(ARM_HOME_O[0],ARM_HOME_O[1],ARM_HOME_O[2],box1_pose.pose.position.x, -0.3, box1_pose.pose.position.z + 0.005)
+	move_pose_arm(ARM_HOME_O[0],ARM_HOME_O[1],ARM_HOME_O[2],box1_pose.pose.position.x, -0.3, box1_pose.pose.position.z + 0.015)
         rospy.sleep(0.5)
         
 
