@@ -3,12 +3,12 @@
   <!-- 
 	  Translation and rotation of camera from its base link
    -->
-	<property name="cam_px" value="0.6" />
+	<property name="cam_px" value="1.2" />
 	<property name="cam_py" value="0" />
-	<property name="cam_pz" value="1" />
+	<property name="cam_pz" value="0.8" />
 	<property name="cam_or" value="0" />
-	<property name="cam_op" value="1.5"/>
-	<property name="cam_oy" value="3.1415" />
+	<property name="cam_op" value="0.7" />
+	<property name="cam_oy" value="3.14159" />
 </root>
 
 

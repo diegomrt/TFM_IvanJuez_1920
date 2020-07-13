@@ -147,7 +147,7 @@ if __name__ == '__main__':
                                     "objeto","camera_rgb_optical_frame") # creamos el frame del objeto
         rospy.Subscriber('/camera/rgb/image_raw', Image, image_callback, queue_size=1)
         rospy.Subscriber("/camera/depth/points", PointCloud2, callback_kinect)
-        rospy.sleep(1)
+        
 	rospy.spin()
         
     except rospy.ROSInterruptException:
