@@ -1,19 +1,26 @@
 # TFM_IvanJuez_1920
 TFM de Iván Juez - URJC
 
-Se han realizado diferentes cambios en el repositorio para poder realizar la acción pick and place tanto en Rviz como en Gazebo.
+Se han realizado diferentes cambios en el repositorio para poder realizar la acción pick and place leyendo los datos obtenidos a través de la cámara y gazebo tanto en Rviz como en Gazebo.
 
-Para lanzarlo en Rviz y Gazebo utilizo el siguiente comando:
-
-·roslaunch irb120_robotiq85_gazebo irb120_robotiq85_gazebo_moveit_rviz_v1.launch 
-
-Si queremos cargar el brazo usando el grasp plugin de Gazebo, debemos introducir el siguiente comando:
+Para lanzarlo en Rviz y Gazebo con el plugin utilizo el siguiente comando:
 
 ·roslaunch irb120_robotiq85_gazebo irb120_robotiq85_gazebo_moveit_rviz_v1.launch load_grasp_fix:=true
 
+En el caso del estudio 1: se situa la cámara Kinect en posición cenital para el reconocimiento de objetos y se realiza un estudio de los resultados obtenidos para ello
+se abre una nueva terminal donde se tratará la imagen obtenida con la cámara KInect a la cual se le realiza un filtro de color para la identificación de objetos y la posición de estos:
 
-Para realizar el pick se debe introducir que caja quieres que coga o "verde" o "azul" y directamente obtiene la posición y orientación de las cajas en Gazebo para realizar el pick. Me falta por hacer la lista de objetos para que me diga autimaticamente los objetos que hay pero de momento funciona unicamente indicando la caja que quieres que coja.
+·rosrun estudio_1 e1_localiza_posicion.py
 
-·rosrun pick_place pick_v3_moveit_gazebo.py
+
+Seguidamente, en una nueva terminal para realizar el pick se debe introducir los diferentes objetos que queramos incluir en la escena desde Gazebo (caja_grd, caja_peq, esfera_grd, esfera_peq) una vez creada la escena que se quiera, se lanza:
+
+·rosrun estudio pick_e1_moveit_gazebo.py
+
+Dentro de la terminal, se pide que objeto se quiere coger y directamente obtiene la posición y orientación en Gazebo y de la cámara Kinect para realizar el pick.
+
+
+
+
 
 
