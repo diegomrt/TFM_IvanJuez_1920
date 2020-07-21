@@ -31,16 +31,16 @@ def image_callback(msg):
 
     # Creamos un filtro HSV para la imagen
     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-    lower_green = numpy.array([50, 50, 177], numpy.uint8)
-    upper_green = numpy.array([84, 150, 255], numpy.uint8)
+    #lower_green = numpy.array([50, 50, 177], numpy.uint8)
+    #upper_green = numpy.array([84, 150, 255], numpy.uint8)
     # image = imutils.resize(image, width=600)
-    mask = cv2.inRange(hsv, lower_green, upper_green)
-    blurred = cv2.GaussianBlur(image, (11, 11), 0)
-    hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
+    #mask = cv2.inRange(hsv, lower_green, upper_green)
+    #blurred = cv2.GaussianBlur(image, (11, 11), 0)
+    #hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
 
     # ponemos los limites del filtro de color
-    greenLower = (29, 86, 6)
-    greenUpper = (64, 255, 255)
+    greenLower = (1, 80, 255)
+    greenUpper = (100, 255, 255)
 
     # Erosionamos y dilatamos para mejorar los bordes del filtro
     mask = cv2.inRange(hsv, greenLower, greenUpper)
@@ -51,6 +51,7 @@ def image_callback(msg):
     contours = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     contours = imutils.grab_contours(contours)
     contourLength = len(contours)
+
 
     # Comprobamos si algun objeto ha sido encontrado
     if contourLength < 1:
@@ -77,7 +78,7 @@ def image_callback(msg):
 
     # Mostramos la imagen en la ventana
     cv2.imshow("TFM_IvanJuez", image)
-    cv2.waitKey(3) 
+    cv2.waitKey(3)     
 
 
 def callback_kinect(data):

@@ -147,7 +147,7 @@ irb_120:
     - SPARS
     - SPARStwo
   projection_evaluator: joints(joint_1,joint_2)
-  longest_valid_segment_fraction: 0.005
+  longest_valid_segment_fraction: 0.002
 robotiq_85:
   default_planner_config: ""
   planner_configs:

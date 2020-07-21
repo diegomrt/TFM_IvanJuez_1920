@@ -351,14 +351,14 @@ if __name__=='__main__':
 	
 	# Limpiamos la escena (si existe de ejecuciones previas)
 	box1_id= model	
-        scene.remove_world_object(box1_id)
+        scene.remove_world_object()
 	rospy.sleep(1)
 
-	# Dimensiones de las esferas en función del radio detectado, radios menores a 15 son esferas pequeñas, radios mayores son grandes. De esta forma. fijo la altura a la que se tiene que hacer el pick.
+	# Dimensiones de las esferas en función del radio detectado, radios menores a 15 son esferas/cajas pequeñas, radios mayores son grandes. De esta forma. fijo la altura a la que se tiene que hacer el pick.
 	if radio < 15:
-		box1_size=[0.02, 0.02, 0.02]
+		box1_size=[0.04, 0.04, 0.02]
 	else:
-		box1_size=[0.03, 0.03, 0.03]
+		box1_size=[0.06, 0.06, 0.03]
 	#box1_size=[0.04]
 	
        	# Fijo posicion y orientacion de la caja 1 (objetivo) en función de lo que me lanza gazebo
@@ -366,7 +366,7 @@ if __name__=='__main__':
         box1_pose.header.frame_id = robot.get_planning_frame()
         box1_pose.pose.position.x = x
         box1_pose.pose.position.y = y
-	box1_pose.pose.position.z = box1_size[2] + 0.005
+	box1_pose.pose.position.z = box1_size[2] -0.002
 	box1_pose.pose.orientation.x = posicion_cubo.pose.orientation.x
 	box1_pose.pose.orientation.y = posicion_cubo.pose.orientation.y
 	box1_pose.pose.orientation.z = posicion_cubo.pose.orientation.z
@@ -403,12 +403,12 @@ if __name__=='__main__':
 	grasp_pose.pose.position.z = grasp_pose.pose.position.z + GRIPPER_EXTRA
 	
 	# Llamada generación mensajes de graps 
-	if box1_size[1] > 0.03 :
-		GRIPPER_cerrada = [0.43]
-		grasps = make_grasps(grasp_pose, box1_id, [ GRIPPER_cerrada[0] - box1_size[1] - GRASP_OVERTIGHTEN] )
+	if box1_size[1] > 0.05 :
+		GRIPPER_cerrada = [0.32]
+		grasps = make_grasps(grasp_pose, box1_id, [ GRIPPER_cerrada[0] - box1_size[1]/2 - GRASP_OVERTIGHTEN] )
 	
 	else:
-		GRIPPER_cerrada = [0.455]
+		GRIPPER_cerrada = [0.53]
 		grasps = make_grasps(grasp_pose, box1_id, [ GRIPPER_cerrada[0] - box1_size[1] - GRASP_OVERTIGHTEN] )
 	
 	# Publico las grasp poses para verlas en RVIZ
@@ -447,7 +447,7 @@ if __name__=='__main__':
 	# Uso la orientación del punto HOME (Place vertical)
 	rospy.loginfo("Moving arm to PLACE point")	
 	
-	move_pose_arm(ARM_HOME_O[0],ARM_HOME_O[1],ARM_HOME_O[2],-box1_pose.pose.position.x, -box1_pose.pose.position.y, box1_pose.pose.position.z + 0.015)
+	move_pose_arm(ARM_HOME_O[0],ARM_HOME_O[1],ARM_HOME_O[2],-box1_pose.pose.position.x, -box1_pose.pose.position.y, box1_pose.pose.position.z + 0.009)
         rospy.sleep(0.5)
         
 
