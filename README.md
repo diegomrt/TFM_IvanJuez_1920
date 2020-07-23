@@ -10,12 +10,24 @@ Para lanzarlo en Rviz y Gazebo con el plugin utilizo el siguiente comando:
 En el caso del estudio 1: se situa la cámara Kinect en posición cenital para el reconocimiento de objetos y se realiza un estudio de los resultados obtenidos para ello
 se abre una nueva terminal donde se tratará la imagen obtenida con la cámara KInect a la cual se le realiza un filtro de color para la identificación de objetos y la posición de estos:
 
-·rosrun estudio_1 e1_localiza_posicion.py
+Si queremos localizar cajas o cilindros:
+
+  ·rosrun estudio_1 posicion_caja_cil.py
+  
+Si queremos localizar esferas:
+
+  ·rosrun estudio_1 posicion_esferas.py
 
 
 Seguidamente, en una nueva terminal para realizar el pick se debe introducir los diferentes objetos que queramos incluir en la escena desde Gazebo (caja_grd, caja_peq, esfera_grd, esfera_peq) una vez creada la escena que se quiera, se lanza:
 
-·rosrun estudio pick_e1_moveit_gazebo.py
+Si queremos coger cajas o cilindros:
+
+  ·rosrun estudio_1 pick_caja_cil.py
+  
+Si queremos coger esferas:
+
+  ·rosrun estudio_1 pick_esferas.py
 
 Dentro de la terminal, se pide que objeto se quiere coger y directamente obtiene la posición y orientación en Gazebo y de la cámara Kinect para realizar el pick.
 
