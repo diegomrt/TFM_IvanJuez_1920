@@ -336,6 +336,12 @@ if __name__=='__main__':
 	y = rospy.get_param("/posy")
 	z = rospy.get_param("/posz")
 	radio = rospy.get_param("/radio")
+	#cálculo del centro de masas de la esfera x e y iguales y por tanto x=raiz(2)/2 * radio
+	#if radio=24 #es a modo de ejemplo, pensar si fuera solo en caso de esferas fijarme si varia en función si son cajas o esferas
+	#    x_e_y_i= 0.707106781 * radio_esfera
+	#    x_bien = x + x_e_y_i 
+	#    y_bien = y + x_e_y_i
+
  
 	#En este caso con el model obtengo unicamente la rotación(AHora pruebo solo con la verde 
 	model = raw_input("\n Introduzca el color de la pieza a realizar pick : ") 
@@ -364,8 +370,8 @@ if __name__=='__main__':
        	# Fijo posicion y orientacion de la caja 1 (objetivo) en función de lo que me lanza gazebo
         box1_pose = PoseStamped()
         box1_pose.header.frame_id = robot.get_planning_frame()
-        box1_pose.pose.position.x = x
-        box1_pose.pose.position.y = y
+        box1_pose.pose.position.x = x #en este caso poner x_bien
+        box1_pose.pose.position.y = y #en este caso poner y_bien
 	box1_pose.pose.position.z = box1_size[2] -0.002
 	box1_pose.pose.orientation.x = posicion_cubo.pose.orientation.x
 	box1_pose.pose.orientation.y = posicion_cubo.pose.orientation.y
