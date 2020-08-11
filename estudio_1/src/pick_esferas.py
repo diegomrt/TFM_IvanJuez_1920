@@ -386,8 +386,8 @@ if __name__=='__main__':
        	# Fijo posicion y orientacion de la caja 1 (objetivo) en función de lo que me lanza gazebo
         box1_pose = PoseStamped()
         box1_pose.header.frame_id = robot.get_planning_frame()
-        box1_pose.pose.position.x = x_final
-        box1_pose.pose.position.y = y_final
+        box1_pose.pose.position.x = x
+        box1_pose.pose.position.y = y
 	box1_pose.pose.position.z = box1_size[2] -0.002
 	box1_pose.pose.orientation.x = posicion_cubo.pose.orientation.x
 	box1_pose.pose.orientation.y = posicion_cubo.pose.orientation.y
