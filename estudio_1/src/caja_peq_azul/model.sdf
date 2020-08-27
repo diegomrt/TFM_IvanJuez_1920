@@ -1,6 +1,6 @@
 <?xml version='1.0'?>
 <sdf version='1.6'>
-  <model name='caja_peq'>
+  <model name='caja_peq_azul'>
     <link name='link'>
       <pose frame=''>0 0 0 0 -0 0</pose>
       <inertial>
@@ -26,7 +26,7 @@
         </geometry>
         <material>
           <script>
-            <name>Gazebo/Green</name>
+            <name>Gazebo/Blue</name>
             <uri>file://media/materials/scripts/gazebo.material</uri>
           </script>
         </material>
