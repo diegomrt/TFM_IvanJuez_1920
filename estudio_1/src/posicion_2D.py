@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+# coding=utf-8
 
 from roslib import message
 import rospy
@@ -31,32 +31,59 @@ def image_callback(msg):
 
     # Creamos un filtro HSV para la imagen
     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-    lower_green = numpy.array([50, 50, 177], numpy.uint8)
-    upper_green = numpy.array([84, 150, 255], numpy.uint8)
+    #lower_green = numpy.array([50, 50, 177], numpy.uint8)
+    #upper_green = numpy.array([84, 150, 255], numpy.uint8)
     # image = imutils.resize(image, width=600)
-    mask = cv2.inRange(hsv, lower_green, upper_green)
-    blurred = cv2.GaussianBlur(image, (11, 11), 0)
-    hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
+    #mask = cv2.inRange(hsv, lower_green, upper_green)
+    #blurred = cv2.GaussianBlur(image, (11, 11), 0)
+    #hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
 
-    # ponemos los limites del filtro de color
-    greenLower = (29, 86, 6)
-    greenUpper = (64, 255, 255)
+    # ponemos los limites del filtro de color verde
+    greenLower = (1, 80, 255)
+    greenUpper = (100, 255, 255)
 
-    # Erosionamos y dilatamos para mejorar los bordes del filtro
-    mask = cv2.inRange(hsv, greenLower, greenUpper)
-    mask = cv2.erode(mask, None, iterations=2)
-    mask = cv2.dilate(mask, None, iterations=2)
+    # ponemos los limites del filtro de color azul
+    blueLower = (110,50,255)
+    blueUpper = (130,255,255)
+
+    # ponemos los limites del filtro de color rojo
+    redLower = (0, 50, 255)
+    redUpper = (50, 255, 255)
+
+
+    if color == 'verde':
+        # Erosionamos y dilatamos para mejorar los bordes del filtro verde
+        mask = cv2.inRange(hsv, greenLower, greenUpper)
+        mask = cv2.erode(mask, None, iterations=2)
+        mask = cv2.dilate(mask, None, iterations=2)
+
+    elif color == 'azul':
+        # Erosionamos y dilatamos para mejorar los bordes del filtro azul
+        mask = cv2.inRange(hsv, blueLower, blueUpper)
+        mask = cv2.erode(mask, None, iterations=2)
+        mask = cv2.dilate(mask, None, iterations=2)
+
+    elif color == 'rojo':
+        # Erosionamos y dilatamos para mejorar los bordes del filtro rojo
+        mask = cv2.inRange(hsv, redLower, redUpper)
+        mask = cv2.erode(mask, None, iterations=2)
+        mask = cv2.dilate(mask, None, iterations=2)
+
 
     # Encontramos todos los contornos
     contours = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     contours = imutils.grab_contours(contours)
     contourLength = len(contours)
+    
+    #dibujo los contornos de las formas
+    cv2.drawContours(image,contours,-1,(40,150,255), 2)
+
 
     # Comprobamos si algun objeto ha sido encontrado
     if contourLength < 1:
-        print "No objects found"
+        print "No objects found"      
         sys.exit("No objects found") 
-
+        
     # Escogemos el objeto con mayor area
     area = [0.0]*len(contours)
     for i in range(contourLength):
@@ -67,8 +94,8 @@ def image_callback(msg):
     (posu ,posv), radius = cv2.minEnclosingCircle(ball_image)
     ball_center = (int(posu),int(posv))
     ball_radius = int(radius)
-    cv2.circle(image, ball_center, ball_radius, (255,0,0), 2)
-    cv2.circle(image, ball_center, 5, (0, 0, 255), -1)
+    cv2.circle(image, ball_center, ball_radius, (40,150,255), 2)
+    cv2.circle(image, ball_center, 5, (40,150,255), -1)
 
     # Guardamos en el servidor de parametros las posiciones x e y del objeto.
     rospy.set_param('posu', posu)
@@ -77,7 +104,7 @@ def image_callback(msg):
 
     # Mostramos la imagen en la ventana
     cv2.imshow("TFM_IvanJuez", image)
-    cv2.waitKey(3) 
+    cv2.waitKey(3)     
 
 
 def callback_kinect(data):
@@ -145,9 +172,17 @@ if __name__ == '__main__':
                                     (0.0, 0.0, 0.0, 0.0),
                                     rospy.Time.now(),
                                     "objeto","camera_rgb_optical_frame") # creamos el frame del objeto
+
+        # Pongo el input para hacer la máscara del filtro
+        color = raw_input("\n Introduzca el color de la pieza : ") 
+
+        print "\n el color elegido es= ", color
+
+        rospy.sleep(0.5)
+
         rospy.Subscriber('/camera/rgb/image_raw', Image, image_callback, queue_size=1)
         rospy.Subscriber("/camera/depth/points", PointCloud2, callback_kinect)
-        rospy.sleep(1)
+        
 	rospy.spin()
         
     except rospy.ROSInterruptException:

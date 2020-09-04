@@ -361,11 +361,12 @@ if __name__=='__main__':
 	rospy.sleep(1)
 
 	# Dimensiones de las esferas en función del radio detectado, radios menores a 15 son esferas/cajas pequeñas, radios mayores son grandes. De esta forma. fijo la altura a la que se tiene que hacer el pick.
-	if radio < 15:
-		box1_size=[0.04, 0.04, 0.02]
-	else:
-		box1_size=[0.06, 0.06, 0.03]
-	#box1_size=[0.04]
+	if radio < 25:
+	    box1_size=[0.04, 0.04, 0.02]
+
+	elif radio > 25:
+	    box1_size=[0.06, 0.06, 0.03]
+	
 	
        	# Fijo posicion y orientacion de la caja 1 (objetivo) en función de lo que me lanza gazebo
         box1_pose = PoseStamped()
@@ -409,14 +410,18 @@ if __name__=='__main__':
 	grasp_pose.pose.position.z = grasp_pose.pose.position.z + GRIPPER_EXTRA
 	
 	# Llamada generación mensajes de graps 
-	if box1_size[1] > 0.05 :
-		GRIPPER_cerrada = [0.32]
-		grasps = make_grasps(grasp_pose, box1_id, [ GRIPPER_cerrada[0] - box1_size[1]/2 - GRASP_OVERTIGHTEN] )
+	if box1_size[1] == 0.06 :
+	    GRIPPER_cerrada = [0.32]
+	    grasps = make_grasps(grasp_pose, box1_id, [ GRIPPER_cerrada[0] - box1_size[1]/2 - GRASP_OVERTIGHTEN] )
+	    print "\n la posición de la pinza es = ", GRIPPER_cerrada	
+	    print "\n el tamaño de la caja es = ", box1_size[1]
 	
-	else:
-		GRIPPER_cerrada = [0.53]
-		grasps = make_grasps(grasp_pose, box1_id, [ GRIPPER_cerrada[0] - box1_size[1] - GRASP_OVERTIGHTEN] )
-	
+	elif box1_size[1] == 0.04 :
+	    GRIPPER_cerrada = [0.53]
+	    grasps = make_grasps(grasp_pose, box1_id, [ GRIPPER_cerrada[0] - box1_size[1]/2 - GRASP_OVERTIGHTEN] )
+	    print "\n la posición de la pinza es = ", GRIPPER_cerrada
+            print "\n el tamaño de la caja es = ", box1_size[1]
+
 	# Publico las grasp poses para verlas en RVIZ
 	for grasp in grasps:
 	    gripper_pose_pub.publish(grasp.grasp_pose)
